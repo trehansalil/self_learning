@@ -1,0 +1,5 @@
+pyautogen
+autogen-agentchat
+python-dotenv
+yfinance
+openai
