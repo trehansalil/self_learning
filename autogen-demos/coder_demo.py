@@ -1,6 +1,6 @@
 from autogen import UserProxyAgent, AssistantAgent
 
-from constants import *
+from src.constants import *
 
 seed = 43
 config_list_gpt = [

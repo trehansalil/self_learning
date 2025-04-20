@@ -8,7 +8,7 @@ from autogen_agentchat.ui import Console
 from autogen_core.models import ModelInfo, ModelFamily
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-from constants import *
+from src.constants import *
 
 
 def refund_flight(flight_id: str) -> str:
