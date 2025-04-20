@@ -2,13 +2,12 @@ import asyncio
 
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import HandoffTermination, TextMentionTermination
-from autogen_agentchat.messages import HandoffMessage
 from autogen_agentchat.teams import Swarm
-from autogen_agentchat.ui import Console
 from autogen_core.models import ModelInfo, ModelFamily
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from src.constants import *
+from src.model.helpers import run_team_stream
 
 
 def refund_flight(flight_id: str) -> str:
@@ -54,21 +53,5 @@ team = Swarm([travel_agent, flights_refunder], termination_condition=termination
 
 task = "Hi"
 
-
-async def run_team_stream() -> None:
-    task_result = await Console(team.run_stream(task=task))
-    last_message = task_result.messages[-1]
-
-    while isinstance(last_message, HandoffMessage) and last_message.target == "user":
-        user_message = input("User: ")
-
-        task_result = await Console(
-            team.run_stream(task=HandoffMessage(source="user", target=last_message.source, content=user_message))
-        )
-        last_message = task_result.messages[-1]
-
-    await model_client.close()
-
-
 if __name__ == "__main__":
-    asyncio.run(run_team_stream())
+    asyncio.run(run_team_stream(team=team, task=task, model_client=model_client))
