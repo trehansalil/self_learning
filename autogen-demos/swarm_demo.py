@@ -22,6 +22,7 @@ model_client = OpenAIChatCompletionClient(
     base_url=QWEN_API_BASE,
     temperature=0.7,
     max_tokens=1024,
+    seed=42,
     model_info=ModelInfo(function_calling=True, family=ModelFamily.ANY, vision=False, json_output=True,
                          structured_output=True)
 )
