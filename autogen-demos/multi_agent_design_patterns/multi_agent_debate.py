@@ -11,7 +11,7 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 from multi_agent_design_patterns.agent_class.base import MathSolver, MathAggregator
 from multi_agent_design_patterns.data_class.base import Question
 from src.constants import LLAMA3_2_API_BASE, LLAMA3_2_API_KEY, LLAMA3_2_API_MODEL_NAME, QWEN_API_MODEL_NAME, \
-    QWEN_API_KEY, QWEN_API_BASE
+    QWEN_API_KEY, QWEN_API_BASE, ModelInfo, ModelFamily
 
 
 async def main(query):
