@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
-
+from pydantic import BaseModel
+from autogen_core.models import LLMMessage
 
 @dataclass
 class Question:
@@ -49,3 +50,15 @@ class UserTask:
 @dataclass
 class FinalResult:
     result: str
+
+class UserLogin(BaseModel):
+    pass
+
+
+class UserTask(BaseModel):
+    context: List[LLMMessage]
+
+
+class AgentResponse(BaseModel):
+    reply_to_topic_type: str
+    context: List[LLMMessage]
