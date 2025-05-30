@@ -21,8 +21,15 @@ model_client = OpenAIChatCompletionClient(
     model_info=ModelInfo(vision=False, function_calling=True, family=ModelFamily.ANY, json_output=True, structured_output=True),
 )
 
+model_client1 = OpenAIChatCompletionClient(
+    model=LLAMA3_2_API_MODEL_NAME,
+    api_key=LLAMA3_2_API_KEY,
+    base_url=LLAMA3_2_API_BASE,
+    model_info=ModelInfo(vision=False, function_calling=True, family=ModelFamily.ANY, json_output=True, structured_output=True),
+)
+
 # Create the writer agent
-writer = AssistantAgent("writer", model_client=model_client, system_message="Draft a short paragraph on climate change.")
+writer = AssistantAgent("writer", model_client=model_client1, system_message="Draft a short paragraph on climate change.")
 
 # Create the reviewer agent
 reviewer = AssistantAgent("reviewer", model_client=model_client, system_message="Review the draft and suggest improvements.")
@@ -43,14 +50,50 @@ graph = builder.build()
 
 flow = GraphFlow([writer, reviewer, manager], graph=graph)
 
+# Create the writer agent
+writer = AssistantAgent("writer", model_client=model_client1, system_message="Draft a short paragraph on climate change.")
+
+# Create two editor agents
+editor1 = AssistantAgent("labour_market_expert", model_client=model_client, system_message="Edit the paragraph for speaking from the labour market purview. Also, share your Knowledge cut-off")
+
+editor2 = AssistantAgent("political_economic_Expert", model_client=model_client, system_message="Edit the paragraph for speaking from the economic and political purview. Also, share your Knowledge cut-off")
+
+# Create the final reviewer agent
+final_reviewer = AssistantAgent(
+    "UAE_King",
+    model_client=model_client,
+    system_message="Consolidate the inputs and write a royal outlook on the topic based on the expert opinion and self interest.",
+)
+
+# Build the workflow graph
+builder = DiGraphBuilder()
+builder.add_node(writer).add_node(editor1).add_node(editor2).add_node(final_reviewer)
+
+# Fan-out from writer to editor1 and editor2
+builder.add_edge(writer, editor1)
+builder.add_edge(writer, editor2)
+
+# Fan-in both editors into final reviewer
+builder.add_edge(editor1, final_reviewer)
+builder.add_edge(editor2, final_reviewer)
+
+# Build and validate the graph
+graph = builder.build()
+
+# Create the flow
+flow2 = GraphFlow(
+    participants=builder.get_participants(),
+    graph=graph,
+)
+
 import asyncio
 
 
 async def generator(event):
     yield event
 
-async def main():
-    stream = flow.run_stream(task="Write a short note on the impact of GDP on UAE economy.")
+async def main(query):
+    stream = flow.run_stream(task=query)
     async for event in stream:  # type: ignore
         print("\n\n")
 
@@ -59,6 +102,10 @@ async def main():
         else:
             print(f"{event.source.capitalize()}:\n", end="", flush=True)
             print(event.content, end="", flush=True)
-    event
+
+async def main2(query):
+    await Console(flow2.run_stream(task=query))
 if __name__ == "__main__":
-    asyncio.run(main())
+    query = "How does Inflation impact the Growth of expat individuals in the UAE Economy."
+    # asyncio.run(main(query))
+    asyncio.run(main2(query))
