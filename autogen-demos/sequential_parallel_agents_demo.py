@@ -1,18 +1,16 @@
 # Create an OpenAI model client
-from src.constants import LLAMA3_2_API_BASE, LLAMA3_2_API_KEY, LLAMA3_2_API_MODEL_NAME, QWEN_API_MODEL_NAME, QWEN_API_KEY, QWEN_API_BASE
-import asyncio
-from autogen_ext.models.openai import OpenAIChatCompletionClient
-from autogen_agentchat.agents import AssistantAgent
-from autogen_agentchat.teams import MagenticOneGroupChat
+from autogen_agentchat.agents import AssistantAgent, MessageFilterAgent, MessageFilterConfig, PerSourceFilter
+from autogen_agentchat.base import TaskResult
+from autogen_agentchat.teams import (
+    DiGraphBuilder,
+    GraphFlow,
+)
 from autogen_agentchat.ui import Console
-from autogen_agentchat.teams import DiGraphBuilder, GraphFlow
-from autogen_agentchat.base import Response, TaskResult
-from typing_extensions import AsyncGenerator
-
-from autogen_agentchat.ui._console import aprint
-
 from autogen_core.models import ModelFamily, ModelInfo
+from autogen_ext.models.openai import OpenAIChatCompletionClient
 
+from src.constants import LLAMA3_2_API_BASE, LLAMA3_2_API_KEY, LLAMA3_2_API_MODEL_NAME, QWEN_API_MODEL_NAME, \
+    QWEN_API_KEY, QWEN_API_BASE
 
 model_client = OpenAIChatCompletionClient(
     model=QWEN_API_MODEL_NAME,
@@ -112,3 +110,51 @@ if __name__ == "__main__":
     query = "How does Inflation impact the Growth of expat individuals in the UAE Economy."
     # asyncio.run(main(query))
     asyncio.run(main2(query))
+
+
+# Agents
+generator = AssistantAgent("generator", model_client=model_client1, system_message="Generate a list of creative ideas.")
+reviewer = AssistantAgent(
+    "reviewer",
+    model_client=model_client,
+    system_message="Review ideas and say 'REVISE' and provide feedbacks, or 'APPROVE' for final approval.",
+)
+summarizer_core = AssistantAgent(
+    "summary", model_client=model_client, system_message="Summarize the user request and the final feedback."
+)
+
+# Filtered summarizer
+filtered_summarizer = MessageFilterAgent(
+    name="summary",
+    wrapped_agent=summarizer_core,
+    filter=MessageFilterConfig(
+        per_source=[
+            PerSourceFilter(source="user", position="first", count=1),
+            PerSourceFilter(source="reviewer", position="last", count=1),
+        ]
+    ),
+)
+
+# Build graph with conditional loop
+builder = DiGraphBuilder()
+builder.add_node(generator).add_node(reviewer).add_node(filtered_summarizer)
+builder.add_edge(generator, reviewer)
+builder.add_edge(reviewer, generator, condition="REVISE")
+builder.add_edge(reviewer, filtered_summarizer, condition="APPROVE")
+builder.set_entry_point(generator)  # Set entry point to generator. Required if there are no source nodes.
+graph = builder.build()
+
+# Create the flow
+flow3 = GraphFlow(
+    participants=builder.get_participants(),
+    graph=graph,
+)
+async def main3(query):
+    await Console(flow3.run_stream(task=query))
+if __name__ == "__main__":
+    query = "How does Inflation impact the Growth of expat individuals in the UAE Economy. How can we balance out inflation with a steady growth of Indian Expats?"
+    # asyncio.run(main(query))
+    query = "Brainstorm ways to reduce plastic waste."
+
+    asyncio.run(main3(query))
+
