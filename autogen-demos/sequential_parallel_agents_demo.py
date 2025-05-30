@@ -52,6 +52,9 @@ flow = GraphFlow([writer, reviewer, manager], graph=graph)
 
 # Create the writer agent
 writer = AssistantAgent("writer", model_client=model_client1, system_message="Draft a short paragraph on climate change.")
+researcher = AssistantAgent(
+    "researcher", model_client=model_client1, system_message="Summarize key facts about the topic and key insights required for decision making."
+)
 
 # Create two editor agents
 editor1 = AssistantAgent("labour_market_expert", model_client=model_client, system_message="Edit the paragraph for speaking from the labour market purview. Also, share your Knowledge cut-off")
@@ -67,11 +70,11 @@ final_reviewer = AssistantAgent(
 
 # Build the workflow graph
 builder = DiGraphBuilder()
-builder.add_node(writer).add_node(editor1).add_node(editor2).add_node(final_reviewer)
+builder.add_node(researcher).add_node(editor1).add_node(editor2).add_node(final_reviewer)
 
-# Fan-out from writer to editor1 and editor2
-builder.add_edge(writer, editor1)
-builder.add_edge(writer, editor2)
+# Fan-out from researcher to editor1 and editor2
+builder.add_edge(researcher, editor1)
+builder.add_edge(researcher, editor2)
 
 # Fan-in both editors into final reviewer
 builder.add_edge(editor1, final_reviewer)
