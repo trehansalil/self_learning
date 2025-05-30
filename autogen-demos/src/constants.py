@@ -2,6 +2,8 @@ import os
 import sys
 from pathlib import Path
 
+from autogen_core.models import ModelFamily, ModelInfo
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)
 sys.path.append(project_root)
