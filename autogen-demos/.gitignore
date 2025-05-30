@@ -1,0 +1,5 @@
+/coding
+/.idea
+
+  git config --local user.email "trehansalil@yahoo.in"
+  git config --local user.name "Salil Trehan"
