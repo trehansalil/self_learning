@@ -1,0 +1,13 @@
+[project]
+name = "autogen-demos"
+version = "0.1.0"
+description = "Trying out different things with AutoGen Framework"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "autogen>=0.9.1.post0",
+    "autogen-agentchat>=0.5.7",
+    "autogen-ext[diskcache,openai,redis]>=0.5.7",
+    "instructor>=1.8.3",
+    "langchain>=0.3.25",
+]
