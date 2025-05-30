@@ -70,4 +70,4 @@ user = UserProxyAgent(
 )
 
 user.initiate_chat(assistant,
-                   message="Please prepare a technical report for Facebook stock in the last 12 months. Save any relevant plots in the relevant folders. Please look at MACD, 50 DMA, 200 DMA, RSI")
+                   message="Please prepare a technical report for HDFC Bank stock in the last 12 months. Save any relevant plots in the relevant folders. Please look at MACD, 50 DMA, 200 DMA, RSI")
