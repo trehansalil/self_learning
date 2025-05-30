@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from autogen_core import (
@@ -13,7 +14,7 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from multi_agent_design_patterns.agent_class.base import AIAgent, HumanAgent, UserAgent
 from multi_agent_design_patterns.data_class.base import UserLogin
-from src.constants import *
+from src.constants import QWEN_API_MODEL_NAME, QWEN_API_BASE, QWEN_API_KEY, ModelFamily, ModelInfo
 
 
 def execute_order(product: str, price: int) -> str:
@@ -220,3 +221,12 @@ async def main(task):
     # Run until completion.
     await runtime.stop_when_idle()
     await model_client.close()
+
+if __name__ == '__main__':
+    query = "Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?"
+    task = (
+        "I have 432 cookies, and divide them 3:4:2 between Alice, Bob, and Charlie. How many cookies does each person get?",
+        query
+    )
+
+    asyncio.run(main(task))
