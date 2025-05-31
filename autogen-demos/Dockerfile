@@ -44,7 +44,7 @@ ENV PATH="/usr/local/bin:$PATH"
 RUN pip install --upgrade uv && \
     uv init
     
-RUN uv add notebook jupyterlab pyspark
+RUN uv add notebook jupyterlab pyspark notebook
 
 # -------------------- Expose port and run jupyterlab --------------------
 EXPOSE 8888
