@@ -1,28 +1,30 @@
-# Stage 1: Python environment setup
-FROM python:3.10-slim AS python-base
+# Stage 1: Python base
+FROM python:3.10.12-slim AS python-base
 
-# Install necessary packages and upgrade pip
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
-    pip install --upgrade pip
-
-# Install the uv tool and other Python dependencies
-RUN pip install uv
+    pip install --upgrade pip && \
+    pip install uv
 
 # Stage 2: Spark setup
-FROM spark:latest
+FROM bitnami/spark:latest
 
 USER root
 
-# Copy Python environment from the previous stage
+# Copy Python 3.10 from python-base stage
 COPY --from=python-base /usr/local /usr/local
 
-# Ensure the correct Python version is used
-RUN ln -sf /usr/local/bin/python3.10 /usr/bin/python && \
-    ln -sf /usr/local/bin/pip3.10 /usr/bin/pip
+# Optional: clean pre-installed Python 3.8 links to avoid fallback
+RUN rm -f /usr/bin/python /usr/bin/pip && \
+    ln -s /usr/local/bin/python3.10 /usr/bin/python && \
+    ln -s /usr/local/bin/pip3.10 /usr/bin/pip
 
-# Initialize uv and add additional packages
-RUN uv init
-RUN uv add jupyterlab pyspark
+# Set env so uv uses correct Python
+ENV PYTHON=/usr/local/bin/python3.10
+ENV PATH="/usr/local/bin:$PATH"
 
-USER spark
+# Force uv to use correct Python explicitly
+RUN uv init --python=/usr/local/bin/python3.10 && \
+    uv add jupyterlab pyspark
+
+USER spark  # or USER spark depending on your image
