@@ -11,4 +11,5 @@ dependencies = [
     "autogen-ext[magentic-one, diskcache,openai,redis, docker]>=0.5.7",
     "instructor>=1.8.3",
     "langchain>=0.3.25",
+    "yfinance>=0.2.61",
 ]
