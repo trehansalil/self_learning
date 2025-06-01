@@ -14,7 +14,7 @@ services:
       SPARK_UI_PORT: 4040
       GRANT_SUDO: yes
       KAFKA_HOME: /opt/kafka
-    command: start-notebook.sh --NotebookApp.token=''
+    # command: start-notebook.sh --NotebookApp.token=''
     volumes:
       - streaming_data:/data
       - ./kafka/bin:/opt/kafka  # Mount Kafka CLI tools
