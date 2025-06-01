@@ -13,8 +13,11 @@ services:
       JUPYTER_PORT: 8888
       SPARK_UI_PORT: 4040
       GRANT_SUDO: yes
+      KAFKA_HOME: /opt/kafka
+    command: start-notebook.sh --NotebookApp.token=''
     volumes:
       - streaming_data:/data
+      - ./kafka/bin:/opt/kafka  # Mount Kafka CLI tools
 
   salil-zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -36,6 +39,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: salil-zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://salil-kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -63,10 +67,12 @@ services:
     container_name: grafana
     ports:
       - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
     depends_on:
       - influxdb2
+    volumes:
+      - grafana_data:/var/lib/grafana
+      # Optional: Uncomment below to provision Influx datasource automatically
+      # - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
 
 volumes:
   streaming_data:
