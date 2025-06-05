@@ -1,81 +1,53 @@
-version: '2'
-
+version: '3.8'
 services:
 
-  salil-pyspark-jupyter:
-    image: easewithdata/pyspark-jupyter-lab
-    container_name: salil-pyspark-jupyter-lab
-    user: root
-    ports:
-      - "8888:8888"
-      - "4040:4040"
-    environment:
-      JUPYTER_PORT: 8888
-      SPARK_UI_PORT: 4040
-      GRANT_SUDO: yes
-      KAFKA_HOME: /opt/kafka
-    # command: start-notebook.sh --NotebookApp.token=''
-    volumes:
-      - streaming_data:/data
-      - ./kafka/bin:/opt/kafka  # Mount Kafka CLI tools
-
-  salil-zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    container_name: salil-zookeeper
-    ports:
-      - "2181:2181"
+  zookeeper:
+    image: confluentinc/cp-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
 
-  salil-kafka:
-    image: confluentinc/cp-kafka:latest
-    container_name: salil-kafka
+  kafka:
+    image: confluentinc/cp-kafka
     depends_on:
-      - salil-zookeeper
+      - zookeeper
     ports:
       - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: salil-zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://salil-kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CREATE_TOPICS: "cryptos:1:1"
-    volumes:
-      - streaming_data:/data
 
-  influxdb2:
-    image: influxdb:2
-    container_name: influxdb2
+  influxdb:
+    image: influxdb:1.8
     ports:
       - "8086:8086"
     volumes:
-      - influxdb2_data:/var/lib/influxdb2
-      - influxdb2_config:/etc/influxdb2
+      - influxdb_data:/var/lib/influxdb
     environment:
-      DOCKER_INFLUXDB_INIT_MODE: setup
-      DOCKER_INFLUXDB_INIT_USERNAME: InfluxTutorial
-      DOCKER_INFLUXDB_INIT_PASSWORD: InfluxTutorial@123#
-      DOCKER_INFLUXDB_INIT_ORG: scaler_project
-      DOCKER_INFLUXDB_INIT_BUCKET: crypto
+      INFLUXDB_DB: metrics
+      INFLUXDB_HTTP_AUTH_ENABLED: "false"
 
   grafana:
     image: grafana/grafana
-    container_name: grafana
     ports:
       - "3000:3000"
     depends_on:
-      - influxdb2
+      - influxdb
     volumes:
       - grafana_data:/var/lib/grafana
-      # Optional: Uncomment below to provision Influx datasource automatically
-      # - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+
+  pyspark:
+    image: jupyter/pyspark-notebook
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    environment:
+      - SPARK_MASTER=local[*]
 
 volumes:
-  streaming_data:
-  influxdb2_data:
-  influxdb2_config:
+  influxdb_data:
   grafana_data:
