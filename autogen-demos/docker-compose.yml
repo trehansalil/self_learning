@@ -1,15 +1,21 @@
 version: '3.8'
+
 services:
 
   zookeeper:
-    image: confluentinc/cp-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
     ports:
       - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - app-net
 
   kafka:
-    image: confluentinc/cp-kafka
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
     depends_on:
       - zookeeper
     ports:
@@ -17,37 +23,68 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      # KAFKA_CREATE_TOPICS: "cryptos:1:1"
+    networks:
+      - app-net
+    # command: kafka-topics --create --topic cryptos --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1
 
   influxdb:
-    image: influxdb:1.8
+    image: influxdb:2.7
+    container_name: influxdb
     ports:
       - "8086:8086"
     volumes:
-      - influxdb_data:/var/lib/influxdb
+      - streaming_data:/var/lib/influxdb2
     environment:
-      INFLUXDB_DB: metrics
-      INFLUXDB_HTTP_AUTH_ENABLED: "false"
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin123
+      DOCKER_INFLUXDB_INIT_ORG: scaler
+      DOCKER_INFLUXDB_INIT_BUCKET: crypto
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: admin-token
+    networks:
+      - app-net
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:latest
+    container_name: grafana
     ports:
       - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
     depends_on:
       - influxdb
-    volumes:
-      - grafana_data:/var/lib/grafana
+    networks:
+      - app-net
 
-  pyspark:
-    image: jupyter/pyspark-notebook
+  jupyterlab:
+    image: easewithdata/pyspark-jupyter-lab
+    container_name: jupyterlab
+    user: root
     ports:
       - "8888:8888"
+      - "4040:4040"
     volumes:
-      - ./notebooks:/home/jovyan/work
+      - streaming_data:/data
     environment:
-      - SPARK_MASTER=local[*]
+      JUPYTER_PORT: 8888
+      SPARK_UI_PORT: 4040
+      GRANT_SUDO: yes
+    depends_on:
+      - kafka
+      - influxdb
+    networks:
+      - app-net
+    # command: start-notebook.sh --NotebookApp.token=''
+    
 
 volumes:
-  influxdb_data:
-  grafana_data:
+  streaming_data:
+
+networks:
+  app-net:
+    driver: bridge
+
