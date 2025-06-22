@@ -20,6 +20,15 @@ async def main():
         base_url=EURI_API_BASE_URL
     )
 
+    planner = AssistantAgent(
+        name='Plnner',
+        model_client=model,
+        system_message=("You're a planner agent. You will be given a excel data file"
+        "and a question about it. You can develop python code to answer the question"
+        "Your job is to plan the steps to answer the question and then you should along with any linked dependencies"
+        "provide the plan to the developer agent"
+        )
+    )
 
     developer = AssistantAgent(
         name='Developer',
@@ -35,6 +44,7 @@ async def main():
         "If a library is required, you should install it using pip install <library_name>"
         "Once you have the code execution results, you should provide the final answer and"
         "After that you should exactly say TERMINATE to terminate the conversation at the end"
+        "If the executed code output is in markdown then display it as it is, no need to format it within ```markdown```"
         )
     )
 
@@ -52,12 +62,13 @@ async def main():
 
     # Create a group chat with the agents
     team = RoundRobinGroupChat(
-        participants=[developer, executor],
+        participants=[planner, developer, executor],
         termination_condition=TextMentionTermination(text="TERMINATE"),
-        max_turns=30,
+        max_turns=35,
     )
 
     task = "My dataset is Active Worker Per Occupation Level.xlsx. What are the columns in the dataset?"
+    task = "My dataset is Active Worker Per Occupation Level.xlsx. Is this a case of multi-level columns? If yes, then what would be the levels of columns? What do they represent? cAn you please rename this to just 1 level for simplicity? Show me the data in markdown format in the dataset after the renaming"
 
     async for msg in team.run_stream(task = task):
         if isinstance(msg, TextMessage):
