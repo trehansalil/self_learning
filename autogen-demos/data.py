@@ -11,7 +11,7 @@ from autogen_agentchat.conditions import TextMentionTermination
 
 import asyncio
 
-from src.constants import EURI_API_BASE_URL, EURI_API_KEY, EURI_MODEL_NAME_GPT_4_1_NANO
+from src.constants import EURI_API_BASE_URL, EURI_API_KEY, EURI_MODEL_NAME_GPT_4_1_NANO, EURI_MODEL_NAME_GPT_4_1_MINI
 
 async def main():
     model = OpenAIChatCompletionClient(
@@ -20,13 +20,21 @@ async def main():
         base_url=EURI_API_BASE_URL
     )
 
+    model2 = OpenAIChatCompletionClient(
+        model=EURI_MODEL_NAME_GPT_4_1_MINI,
+        api_key=EURI_API_KEY,
+        base_url=EURI_API_BASE_URL
+    )    
+
     planner = AssistantAgent(
-        name='Plnner',
-        model_client=model,
+        name='Planner',
+        model_client=model2,
         system_message=("You're a planner agent. You will be given a excel data file"
         "and a question about it. You can develop python code to answer the question"
         "Your job is to plan the steps to answer the question and then you should along with any linked dependencies"
         "provide the plan to the developer agent"
+        "ONLY when you have the relevant context for answering the question, you should provide the final answer and"
+        "After that you should exactly say TERMINATE to terminate the conversation at the end"        
         )
     )
 
@@ -51,6 +59,7 @@ async def main():
     docker = DockerCommandLineCodeExecutor(
         image='custom-python-3.10',
         work_dir="temp",
+        # delete_tmp_files=True,
     )
 
     await docker.start()
@@ -68,7 +77,7 @@ async def main():
     )
 
     task = "My dataset is Active Worker Per Occupation Level.xlsx. What are the columns in the dataset?"
-    task = "My dataset is Active Worker Per Occupation Level.xlsx. Is this a case of multi-level columns? If yes, then what would be the levels of columns? What do they represent? cAn you please rename this to just 1 level for simplicity? Show me the data in markdown format in the dataset after the renaming"
+    task = "My dataset is Active Worker Per Occupation Level.xlsx. Is this a case of multi-level columns? If yes, then what would be the levels of columns? What do they represent? cAn you please rename this to just 1 level for simplicity? Perform EDA on this dataset after the renaming"
 
     async for msg in team.run_stream(task = task):
         if isinstance(msg, TextMessage):
