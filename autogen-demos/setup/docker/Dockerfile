@@ -1,6 +1,10 @@
 # Stage 1: Install UV and dependencies
 FROM python:3.10-slim
 
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y s3fs fuse && \
+    apt-get clean
 # Install pip dependencies
 COPY requirements.txt /
 RUN pip install --no-cache-dir -r /requirements.txt
@@ -10,3 +14,4 @@ RUN pip install --no-cache-dir -r /requirements.txt
 
 # # (Optional) Set PYTHONPATH so your custom classes are importable from anywhere
 # ENV PYTHONPATH="/custom_classes:${PYTHONPATH}"
+RUN mkdir -p /mnt/s3
