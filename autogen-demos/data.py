@@ -33,9 +33,10 @@ async def main():
         "and a question about it. You can develop python code to answer the question"
         "Your job is to plan the steps to answer the question and then you should along with any linked dependencies"
         "provide the plan to the developer agent"
-        "ONLY when you have the relevant context for answering the question, you should provide the final answer and"
+        "ONLY when you have the relevant context for answering the question with the data, you should provide the final answer and"
         "After that you should exactly say TERMINATE to terminate the conversation at the end"        
-        )
+        ),
+        # handoffs=['Developer', 'Synthesizer']
     )
 
     developer = AssistantAgent(
@@ -55,6 +56,17 @@ async def main():
         "If the executed code output is in markdown then display it as it is, no need to format it within ```markdown```"
         )
     )
+
+    # synthesizer = AssistantAgent(
+    #     name='Synthesizer',
+    #     model_client=model,
+    #     system_message=("You're a Synthesizer agent. Your predecessors are Planner and Developer agents."
+    #     "You are to answer a given question."
+    #     "Once you have the code execution results, you should provide the final answer and"
+    #     "After that you should exactly say TERMINATE to terminate the conversation at the end"
+    #     "If the executed code output is in markdown then display it as it is, no need to format it within ```markdown```"
+    #     )
+    # )    
 
     docker = DockerCommandLineCodeExecutor(
         image='custom-python-3.10',
